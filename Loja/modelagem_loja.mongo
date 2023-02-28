@@ -1,0 +1,115 @@
+db.produtos.insertOne({
+    marca: "Apple",
+    modelo: "iPhone 11",
+    descricao: "O celular mais novo da apple",
+    sistema: "iOS 13",
+    memoria: "128GB",
+    chips: 1,
+    preco: 4999.99,
+})
+
+db.clientes.find()
+
+db.produtos.update({
+    modelo: "iPhone 11"
+}, {
+    $set: {
+        quantidade : 7
+    }
+})
+
+
+db.clientes.updateMany({}, {
+    $set : {
+        carrinho : {
+            produtos : []
+        }
+    }
+});
+
+
+/*Se tiver mais que 0 no estoque, esse item entra no carrinho do cliente e é removido 1 do estoque*/ 
+db.produtos.findOneAndUpdate({ 
+    modelo : "iPhone 11",
+    quantidade : {
+        $gt : 0
+    }
+},{
+    $inc : {
+        quantidade : -1
+    } 
+}
+);
+
+
+/*var produto = db.produtos.findOneAndUpdate({
+    modelo: "iPhone 11",
+    quantidade: {
+        $gt: 0
+    }
+    },{
+        $inc: {
+            quantidade: -1
+        }
+    },{
+            projection: {
+                marca: 1,
+                modelo: 1,
+                preco: 1
+        }
+});
+
+db.clientes.update({
+    nome: "Micael"
+}, {
+    $push: {
+        "carrinho.produtos": variavel produto
+    }
+}); */
+
+
+db.clientes.aggregate([
+    {
+        $match: {
+            nome : "Micael"
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            id_cliente: "$_id",
+            endereco: "$endereco",
+            data: ISODate(),
+            produtos: "$carrinho.produtos",
+            valorTotal: {
+                $sum: "$carrinho.produtos.preco"
+            }
+        }
+    },
+    {
+        $merge: "pedidos"
+    }
+])
+
+db.lojas.insertOne({
+    nome: "Apple Store",
+    endereco: "Av Roque Petroni Junior, 1080"
+});
+
+var magazineLuiza = db.lojas.findOne({
+    nome: "Magazine Luiza"
+});
+
+var fastShop = db.lojas.findOne({
+    nome: "Fast Shop"
+})
+
+db.produtos.update({
+    modelo: "MMoto G7"
+}, {
+    $set: {
+        vendido_em: [
+            magazineLuiza._id, fastShop._id
+        ]
+    }
+})
